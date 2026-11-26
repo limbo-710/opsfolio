@@ -1171,7 +1171,7 @@ body {
 /* 指定字体：正文 HarmonyOS Sans；文章标题优先 Alibaba PuHuiTi；漂浮词组使用思源宋体。 */
 @font-face {
   font-family: 'HarmonyOS Sans SC';
-  src: url('assets/fonts/harmonyos/HarmonyOS_Sans_SC_Regular.ttf') format('truetype');
+  src: url('assets/fonts/harmonyos/HarmonyOS_Sans_SC_Regular.woff2') format('woff2');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
