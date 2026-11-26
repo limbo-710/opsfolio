@@ -179,10 +179,10 @@ document.addEventListener('error', (event) => {
   const storedName = decodeURIComponent(image.src.split('/').pop() || '');
   const localName = storedName.replace(/_[a-f0-9]{8}(?=\.[^.]+$)/i, '');
   let localPath = null;
-  if (localName.endsWith('.svg')) localPath = `/assets/diagrams/${localName}`;
-  else if (/^(brand-|course-)/.test(localName)) localPath = `/assets/portfolio/susi/${localName}`;
-  else if (/^(water|running|cycling)\./.test(localName)) localPath = `/assets/portfolio/decathlon/${localName}`;
-  else if (/^(background|mockup|prototype-|palette-|ui-)/.test(localName)) localPath = `/assets/portfolio/egypt/${localName}`;
+  if (localName.endsWith('.svg')) localPath = `assets/diagrams/${localName}`;
+  else if (/^(brand-|course-)/.test(localName)) localPath = `assets/portfolio/susi/${localName}`;
+  else if (/^(water|running|cycling)\./.test(localName)) localPath = `assets/portfolio/decathlon/${localName}`;
+  else if (/^(background|mockup|prototype-|palette-|ui-)/.test(localName)) localPath = `assets/portfolio/egypt/${localName}`;
   if (!localPath) return;
 
   image.dataset.localFallback = 'true';

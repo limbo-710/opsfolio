@@ -477,11 +477,11 @@ img { display: block; max-width: 100%; }
   animation: cover-drift 24s ease-in-out infinite alternate;
 }
 .case-susi > .case-header::before {
-  background-image: linear-gradient(90deg, rgba(15,34,29,.94) 0%, rgba(15,34,29,.82) 43%, rgba(15,34,29,.38) 100%), url('/assets/portfolio/academic-library-banner.webp');
+  background-image: linear-gradient(90deg, rgba(15,34,29,.94) 0%, rgba(15,34,29,.82) 43%, rgba(15,34,29,.38) 100%), url('assets/portfolio/academic-library-banner.webp');
   background-position: center, center 57%, center 57%;
 }
 .case-decathlon > .case-header::before {
-  background-image: linear-gradient(90deg, rgba(16,29,35,.93) 0%, rgba(16,29,35,.78) 45%, rgba(16,29,35,.30) 100%), url('/assets/portfolio/decathlon-cycling-banner.webp');
+  background-image: linear-gradient(90deg, rgba(16,29,35,.93) 0%, rgba(16,29,35,.78) 45%, rgba(16,29,35,.30) 100%), url('assets/portfolio/decathlon-cycling-banner.webp');
   background-position: center, center 56%, center 56%;
 }
 .case-header .case-number { color: #e4bc93; font-size: var(--fs-16); }
@@ -638,7 +638,7 @@ img { display: block; max-width: 100%; }
 .category-image-overlay small { font-size: var(--type-12); color: rgba(255,255,255,.82); }
 
 .egypt-case { position: relative; isolation: isolate; overflow: hidden; padding: 34px; border: 1px solid rgba(224,190,121,.28); border-radius: 24px; color: #f2e7cd; background: #211a12; box-shadow: 0 24px 68px rgba(39,30,17,.18); }
-.egypt-case::before { content: ""; position: absolute; z-index: -1; inset: 0; background-image: linear-gradient(180deg, rgba(20,16,11,.65), rgba(24,19,13,.88) 48%, rgba(20,16,11,.94)), url('/assets/portfolio/egypt/background.webp'); background-position: center top; background-size: cover; background-repeat: no-repeat; background-attachment: fixed; }
+.egypt-case::before { content: ""; position: absolute; z-index: -1; inset: 0; background-image: linear-gradient(180deg, rgba(20,16,11,.65), rgba(24,19,13,.88) 48%, rgba(20,16,11,.94)), url('assets/portfolio/egypt/background.webp'); background-position: center top; background-size: cover; background-repeat: no-repeat; background-attachment: fixed; }
 .egypt-header { align-items: center; border-bottom-color: rgba(221,185,112,.35); }
 .egypt-case .case-meta { color: #d4bd8b; font-size: var(--type-14); }
 .egypt-header h3 { color: #fff5dc; font-size: var(--type-40); }
@@ -686,7 +686,7 @@ img { display: block; max-width: 100%; }
 .palette-tile { min-height: 220px; }
 .palette-tile a { min-height: 220px; }
 .palette-tile img { width: 100%; height: 100%; min-height: 220px; object-fit: cover; transition: transform .5s ease; }
-.palette-tile-brown { min-height: 220px; background: linear-gradient(135deg, rgba(28,20,13,.92), rgba(105,76,39,.78)), url('/assets/portfolio/egypt/background.webp') center/cover; }
+.palette-tile-brown { min-height: 220px; background: linear-gradient(135deg, rgba(28,20,13,.92), rgba(105,76,39,.78)), url('assets/portfolio/egypt/background.webp') center/cover; }
 .palette-tile-brown .art-overlay { inset: 0; }
 
 .image-viewer { width: min(1080px, 95vw); max-width: 95vw; height: min(92vh, 1000px); max-height: 92vh; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.18); border-radius: 16px; color: #f6f5ee; background: #121916; box-shadow: 0 28px 90px rgba(0,0,0,.45); }
@@ -886,7 +886,7 @@ img { display: block; max-width: 100%; }
 .palette-icon { position: absolute; right: 12px; top: 50%; width: 34px; height: 34px; transform: translateY(-50%) rotate(45deg); border: 1px solid rgba(222,190,126,.58); }
 .palette-icon::before, .palette-icon::after { content: ""; position: absolute; inset: 8px; border: 1px solid rgba(222,190,126,.72); }
 .palette-icon::after { inset: 14px; background: #d7b66f; }
-.palette-reference-brown { min-height: 190px; background: linear-gradient(135deg, rgba(24,18,12,.48), rgba(95,65,34,.28)), url('/assets/portfolio/egypt/background.webp') center 65%/cover; }
+.palette-reference-brown { min-height: 190px; background: linear-gradient(135deg, rgba(24,18,12,.48), rgba(95,65,34,.28)), url('assets/portfolio/egypt/background.webp') center 65%/cover; }
 .palette-reference-brown::after { content: ""; display: block; width: 100%; height: 100%; background: linear-gradient(90deg,rgba(24,18,12,.1),rgba(24,18,12,.42)); }
 
 @media (max-width: 980px) {
@@ -1171,14 +1171,14 @@ body {
 /* 指定字体：正文 HarmonyOS Sans；文章标题优先 Alibaba PuHuiTi；漂浮词组使用思源宋体。 */
 @font-face {
   font-family: 'HarmonyOS Sans SC';
-  src: url('/assets/fonts/harmonyos/HarmonyOS_Sans_SC_Regular.ttf') format('truetype');
+  src: url('assets/fonts/harmonyos/HarmonyOS_Sans_SC_Regular.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
   font-family: 'Source Han Serif SC';
-  src: url('/assets/fonts/source-han/opsfolio-editorial-serif-tags.woff2') format('woff2');
+  src: url('assets/fonts/source-han/opsfolio-editorial-serif-tags.woff2') format('woff2');
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;
@@ -1280,7 +1280,7 @@ main { position:relative; z-index:1; }
 /* Final font-family bindings: keep the local subset's non-reserved OFL family name. */
 @font-face {
   font-family: 'Opsfolio Editorial Serif';
-  src: url('/assets/fonts/source-han/opsfolio-editorial-serif-tags.woff2') format('woff2');
+  src: url('assets/fonts/source-han/opsfolio-editorial-serif-tags.woff2') format('woff2');
   font-style: normal;
   font-weight: 200 900;
   font-display: swap;
