@@ -1,0 +1,8 @@
+flowchart LR
+    A([01 热点 +<br/>课程内容]) --> B([02 A+B 选题库<br/>学术节点排期]) --> C([03 文案逻辑与<br/>提示词]) --> D([04 AI 辅助<br/>图文生产]) --> E([05 风险检查<br/>与统一排版]) --> F([06 发布与评论区<br/>承接]) --> G([07 点击 · 互动<br/>私信复盘])
+    G -. 复盘迭代 .-> B
+    classDef endpoint fill:#cf3a22,color:#fffaf1,stroke:#cf3a22,stroke-width:2px
+    classDef step fill:#fbf7ee,color:#263b31,stroke:#bfc9bd,stroke-width:1.5px
+    class A,G endpoint
+    class B,C,D,E,F step
+    linkStyle default stroke:#718479,stroke-width:2px

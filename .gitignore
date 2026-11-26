@@ -1,0 +1,5 @@
+node_modules/
+dist/
+source-materials/
+.DS_Store
+*.zip

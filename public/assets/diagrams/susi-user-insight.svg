@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 246" role="img" aria-labelledby="title desc">
+<title id="title">Susi User Insight</title><desc id="desc">横向运营流程图，共 5 个步骤；节点等宽、间距一致，箭头两侧留白均匀。</desc>
+<defs><filter id="shadow" x="-20%" y="-25%" width="140%" height="160%"><feDropShadow dx="0" dy="5" stdDeviation="7" flood-color="#514637" flood-opacity=".09"/></filter><marker id="arrow" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L8 4L0 8Z" fill="#718479"/></marker></defs>
+<style>text{font-family:'HarmonyOS Sans SC','HarmonyOS Sans','Noto Sans SC','Microsoft YaHei',sans-serif}.step{font-size:12px;font-weight:700;letter-spacing:1px;fill:#a04430}.label{font-size:16px;font-weight:600;fill:#27271f}.terminal .step{fill:#f4c7b7}.terminal .label{fill:#fffaf1}</style>
+<path d="M240.0 92.0H252.0" fill="none" stroke="#718479" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M476.0 92.0H488.0" fill="none" stroke="#718479" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M712.0 92.0H724.0" fill="none" stroke="#718479" stroke-width="2.2" marker-end="url(#arrow)"/>
+<path d="M948.0 92.0H960.0" fill="none" stroke="#718479" stroke-width="2.2" marker-end="url(#arrow)"/>
+<g class="terminal"><rect x="24.0" y="34" width="208.0" height="116" rx="20" fill="#365b48" stroke="#365b48" stroke-width="1.35" filter="url(#shadow)"/>
+<text class="step" x="128.0" y="68.5" text-anchor="middle">STEP 01</text>
+<text class="label" x="128.0" y="96.5" text-anchor="middle" fill="#fffaf1">调研课程卖</text>
+<text class="label" x="128.0" y="116.5" text-anchor="middle" fill="#fffaf1">点与竞品</text>
+</g>
+<g class="step"><rect x="260.0" y="34" width="208.0" height="116" rx="20" fill="#fffaf1" stroke="#d7d1c4" stroke-width="1.35" filter="url(#shadow)"/>
+<text class="step" x="364.0" y="68.5" text-anchor="middle">STEP 02</text>
+<text class="label" x="364.0" y="96.5" text-anchor="middle" fill="#27271f">细分学科与</text>
+<text class="label" x="364.0" y="116.5" text-anchor="middle" fill="#27271f">研究阶段</text>
+</g>
+<g class="step"><rect x="496.0" y="34" width="208.0" height="116" rx="20" fill="#fffaf1" stroke="#d7d1c4" stroke-width="1.35" filter="url(#shadow)"/>
+<text class="step" x="600.0" y="78.5" text-anchor="middle">STEP 03</text>
+<text class="label" x="600.0" y="106.5" text-anchor="middle" fill="#27271f">标记学术节点</text>
+</g>
+<g class="step"><rect x="732.0" y="34" width="208.0" height="116" rx="20" fill="#fffaf1" stroke="#d7d1c4" stroke-width="1.35" filter="url(#shadow)"/>
+<text class="step" x="836.0" y="78.5" text-anchor="middle">STEP 04</text>
+<text class="label" x="836.0" y="106.5" text-anchor="middle" fill="#27271f">识别选题卡点</text>
+</g>
+<g class="terminal"><rect x="968.0" y="34" width="208.0" height="116" rx="20" fill="#365b48" stroke="#365b48" stroke-width="1.35" filter="url(#shadow)"/>
+<text class="step" x="1072.0" y="78.5" text-anchor="middle">STEP 05</text>
+<text class="label" x="1072.0" y="106.5" text-anchor="middle" fill="#fffaf1">匹配前沿导览课</text>
+</g>
+</svg>
