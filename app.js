@@ -379,24 +379,28 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
     const placed = [];
     const scrambled = [...orbitWords].sort(() => random() - 0.5);
-    const shuffled = [...scrambled.filter((w) => w.element.classList.contains('is-chip')), ...scrambled.filter((w) => !w.element.classList.contains('is-chip'))];
-    const floatClearance = window.matchMedia('(max-width:720px)').matches ? 10 : 26;
-    // 带框徽章需要干净的落点：把首屏文案与右侧卡片当作禁区
+    // 徽章先占位，避免被后放的普通词挤到别扭的位置
+    const order = [...scrambled.filter((w) => w.element.classList.contains('is-chip')), ...scrambled.filter((w) => !w.element.classList.contains('is-chip'))];
     const fieldRect = field.getBoundingClientRect();
-    const obstacles = ['.site-header', '.hero-copy', '.hero-aside'].reduce((list, selector) => {
-      const node = hero.querySelector(selector);
-      if (!node) return list;
-      const rect = node.getBoundingClientRect();
-      if (!rect.width || !rect.height) return list;
-      list.push({
-        x: rect.left - fieldRect.left - 18,
-        y: rect.top - fieldRect.top - 18,
-        right: rect.right - fieldRect.left + 18,
-        bottom: rect.bottom - fieldRect.top + 18,
-      });
-      return list;
-    }, []);
-    for (const word of shuffled) {
+    // 等分格网：每个词只在自己的格子里抖动，保证四散、任何视口宽度都不会堆叠
+    const cols = width < 760 ? 3 : width < 1100 ? 4 : 5;
+    const rows = Math.ceil(order.length / cols);
+    const cellW = width / cols;
+    const cellH = height / rows;
+    const headline = hero.querySelector('#hero-title');
+    const headlineZone = headline ? (() => {
+      const rect = headline.getBoundingClientRect();
+      return {
+        x: rect.left - fieldRect.left - 10,
+        y: rect.top - fieldRect.top - 10,
+        right: rect.right - fieldRect.left + 10,
+        bottom: rect.bottom - fieldRect.top + 10,
+      };
+    })() : null;
+    // 徽章压在大姓名上会糊成一团，仅这一处保留避让；其余正文随它叠（词层在文字之下）
+    const hitsHeadline = (box) => headlineZone
+      && !(box.right <= headlineZone.x || box.x >= headlineZone.right || box.bottom <= headlineZone.y || box.y >= headlineZone.bottom);
+    order.forEach((word, slot) => {
       const element = word.element;
       element.style.transform = 'none';
       element.style.setProperty('--scatter-x', '0px');
@@ -407,64 +411,48 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
       const rw = Math.abs(w * Math.cos(angle)) + Math.abs(h * Math.sin(angle));
       const rh = Math.abs(w * Math.sin(angle)) + Math.abs(h * Math.cos(angle));
       const isChip = element.classList.contains('is-chip');
-      const clearance = isChip ? 30 : floatClearance;
-      // 漂浮文字不再避开正文/卡片：词层 z-index 低于文案层，文字始终盖在词上，
-      // 只要彼此不重叠、不被顶栏裁切即可。
-      const fits = (box) => placed.every((other) => box.right <= other.x || box.x >= other.right || box.bottom <= other.y || box.y >= other.bottom);
-      let chosen = null;
-      if (isChip) {
-        // 徽章可铺满整个首屏，只为漂浮位移和顶栏留一点余量。
-        const driftPad = 46;
-        const headerEl = document.querySelector('.site-header');
-        const safeTop = Math.round((headerEl ? headerEl.getBoundingClientRect().bottom - fieldRect.top : 0) + driftPad);
-        const floorY = Math.round(Math.max(safeTop, height - rh - driftPad));
-        // 只避开姓名标题这一行，其余正文/卡片允许叠上去（词层在文案之下，字仍清晰）。
-        const headline = hero.querySelector('#hero-title');
-        const headlineZone = headline ? (() => {
-          const rect = headline.getBoundingClientRect();
-          return {
-            x: rect.left - fieldRect.left - 12,
-            y: rect.top - fieldRect.top - 12,
-            right: rect.right - fieldRect.left + 12,
-            bottom: rect.bottom - fieldRect.top + 12,
-          };
-        })() : null;
-        const hitsHeadline = (box) => headlineZone
-          && !(box.right <= headlineZone.x || box.x >= headlineZone.right || box.bottom <= headlineZone.y || box.y >= headlineZone.bottom);
-        for (let attempt = 0; attempt < 420; attempt += 1) {
-          const x = Math.round(random() * Math.max(0, width - rw));
-          const y = Math.round(safeTop + random() * Math.max(0, floorY - safeTop));
-          const box = { x: x - clearance, y: y - clearance, right: x + rw + clearance, bottom: y + rh + clearance };
-          if (fits(box) && !hitsHeadline(box)) { chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box, rw, rh }; break; }
-        }
+      const padX = isChip ? 26 : Math.max(10, cellW * 0.05);
+      const padY = isChip ? 22 : Math.max(8, cellH * 0.04);
+      const cells = [];
+      for (let i = slot; i < slot + cols * rows; i += 1) {
+        const cellIndex = i % (cols * rows);
+        cells.push([cellIndex % cols, Math.floor(cellIndex / cols)]);
       }
-      if (!chosen && !isChip) {
-        for (let attempt = 0; attempt < 360; attempt += 1) {
-          const x = Math.round(random() * Math.max(0, width - rw));
-          const y = Math.round(random() * Math.max(0, height - rh));
-          const box = { x: x - clearance, y: y - clearance, right: x + rw + clearance, bottom: y + rh + clearance };
-          if (fits(box)) { chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box, rw, rh }; break; }
+      let chosen = null;
+      for (const [col, row] of cells) {
+        const cellX = col * cellW;
+        const cellY = row * cellH;
+        const spanX = Math.max(0, cellW - rw - padX * 2);
+        const spanY = Math.max(0, cellH - rh - padY * 2);
+        for (let attempt = 0; attempt < 8; attempt += 1) {
+          const x = Math.round(cellX + padX + random() * spanX);
+          const y = Math.round(cellY + padY + random() * spanY);
+          const box = { x, y, right: x + rw, bottom: y + rh };
+          if (isChip && hitsHeadline(box)) continue;
+          const clear = placed.every((other) => box.right <= other.x - 6 || box.x >= other.right + 6 || box.bottom <= other.y - 6 || box.y >= other.bottom + 6);
+          if (clear) { chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box, rw, rh }; break; }
         }
+        if (chosen) break;
       }
       if (!chosen) {
-        const cols = Math.max(2, Math.ceil(Math.sqrt(orbitWords.length * width / Math.max(height, 1))));
-        const row = placed.length % Math.ceil(orbitWords.length / cols);
-        const col = placed.length % cols;
-        const x = Math.max(0, Math.min(width - rw, (col + random() * 0.12) * width / cols));
-        const y = Math.max(0, Math.min(height - rh, (row + random() * 0.12) * height / Math.ceil(orbitWords.length / cols)));
-        chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, rw, rh, box: { x: x - floatClearance, y: y - floatClearance, right: x + rw + floatClearance, bottom: y + rh + floatClearance } };
+        const col = slot % cols;
+        const row = Math.floor(slot / cols) % rows;
+        const x = Math.min(Math.max(0, col * cellW + padX), Math.max(0, width - rw));
+        const y = Math.min(Math.max(0, row * cellH + padY), Math.max(0, height - rh));
+        chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box: { x, y, right: x + rw, bottom: y + rh }, rw, rh };
       }
       element.style.setProperty('--scatter-x', `${chosen.x}px`);
       element.style.setProperty('--scatter-y', `${chosen.y}px`);
       placed.push(chosen.box);
       word.x = word.y = word.vx = word.vy = 0;
-    }
+    });
   };
+
   const renderWords = () => {
     if (!hero || !orbitWords.length) return;
     const heroBounds = hero.getBoundingClientRect();
     const now = performance.now() * 0.001;
-    const repelRadius = 196;
+    const repelRadius = 280;
     for (const word of orbitWords) {
       const anchorX = heroBounds.left + word.element.offsetLeft + word.element.offsetWidth / 2;
       const anchorY = heroBounds.top + word.element.offsetTop + word.element.offsetHeight / 2;
@@ -478,14 +466,14 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         word.element.style.transform = `rotate(${word.angle})`;
         continue;
       }
-      if (pointer.active && finePointer.matches) {
+      if (pointer.active) {
         const dx = anchorX - pointer.x * window.innerWidth;
         const dy = anchorY - pointer.y * window.innerHeight;
         const distance = Math.hypot(dx, dy);
         if (distance < repelRadius) {
           const angle = distance > 0.001 ? Math.atan2(dy, dx) : word.index * 2.399;
           const intensity = ((repelRadius - distance) / repelRadius) ** 2;
-          const force = 30 * intensity;
+          const force = 88 * intensity;
           targetX = Math.cos(angle) * force;
           targetY = Math.sin(angle) * force;
         }
@@ -545,7 +533,7 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { layoutOrbitWords(); requestRender(); });
   window.addEventListener('scroll', requestRender, { passive: true });
   window.addEventListener('pointermove', (event) => {
-    if (!finePointer.matches || event.pointerType === 'touch') return;
+    if (event.pointerType === 'touch') return;
     pointer.x = event.clientX / Math.max(1, window.innerWidth);
     pointer.y = event.clientY / Math.max(1, window.innerHeight);
     pointer.active = true;
