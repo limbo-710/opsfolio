@@ -383,7 +383,7 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     const floatClearance = window.matchMedia('(max-width:720px)').matches ? 10 : 26;
     // 带框徽章需要干净的落点：把首屏文案与右侧卡片当作禁区
     const fieldRect = field.getBoundingClientRect();
-    const obstacles = ['.hero-copy', '.hero-aside'].reduce((list, selector) => {
+    const obstacles = ['.site-header', '.hero-copy', '.hero-aside'].reduce((list, selector) => {
       const node = hero.querySelector(selector);
       if (!node) return list;
       const rect = node.getBoundingClientRect();
@@ -423,7 +423,8 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
       if (!chosen && isChip) {
         // 徽章退到首屏顶部空带：留出顶栏高度与整体漂浮位移，避免被导航遮住
         const driftPad = 42;
-        const copyTop = obstacles.length ? obstacles[0].y + 18 : height;
+        const copyNode = hero.querySelector('.hero-copy');
+        const copyTop = copyNode ? copyNode.getBoundingClientRect().top - fieldRect.top : height;
         const header = document.querySelector('.site-header');
         const headerBottom = header ? header.getBoundingClientRect().bottom - fieldRect.top : 0;
         const bandTop = Math.max(46, Math.round(headerBottom) + 14);
