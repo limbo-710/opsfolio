@@ -378,7 +378,8 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     for (const char of seedText) { seed ^= char.charCodeAt(0); seed = Math.imul(seed, 16777619); }
     const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
     const placed = [];
-    const shuffled = [...orbitWords].sort(() => random() - 0.5);
+    const scrambled = [...orbitWords].sort(() => random() - 0.5);
+    const shuffled = [...scrambled.filter((w) => w.element.classList.contains('is-chip')), ...scrambled.filter((w) => !w.element.classList.contains('is-chip'))];
     const floatClearance = window.matchMedia('(max-width:720px)').matches ? 10 : 26;
     // 带框徽章需要干净的落点：把首屏文案与右侧卡片当作禁区
     const fieldRect = field.getBoundingClientRect();
@@ -420,10 +421,14 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         }
       }
       if (!chosen && isChip) {
-        // 徽章找不到干净落点就沿首屏顶部空带摆放
+        // 徽章退到首屏顶部空带：留出顶栏高度与整体漂浮位移，避免被导航遮住
+        const driftPad = 42;
+        const copyTop = obstacles.length ? obstacles[0].y + 18 : height;
+        const bandTop = 46;
+        const bandBottom = Math.max(bandTop, Math.min(height - rh - driftPad, copyTop - rh - driftPad));
         for (let attempt = 0; attempt < 240; attempt += 1) {
           const x = Math.round(random() * Math.max(0, width - rw));
-          const y = Math.round(random() * Math.max(0, Math.min(150, height - rh)));
+          const y = Math.round(bandTop + random() * Math.max(0, bandBottom - bandTop));
           const box = { x: x - clearance, y: y - clearance, right: x + rw + clearance, bottom: y + rh + clearance };
           if (fits(box)) { chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box, rw, rh }; break; }
         }
