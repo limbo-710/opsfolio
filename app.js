@@ -259,27 +259,42 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     canvas.style.height = `${height}px`;
     fieldW = width;
     fieldH = height;
-    const spacing = width < 760 ? 14 : 17;
-    const columns = Math.max(26, Math.ceil(width / spacing));
-    const rows = Math.max(18, Math.ceil(height / spacing));
+    // 屏幕空间采样 + 反投影：先按“离画面中心越远越稀”的概率撒点，
+    // 再把每个屏幕点反算成平面坐标，于是密度中心正好落在视口正中。
     const planAspect = width / Math.max(height, 1);
-    dots = new Array(columns * rows);
+    const cellsX = Math.max(30, Math.round(width / 14));
+    const cellsY = Math.max(22, Math.round(height / 14));
+    const TILT = 0.35;
+    const COS_T = Math.cos(TILT);
+    const SIN_T = Math.sin(TILT);
+    const FOCAL = 10;
+    const A_FOCAL = SIN_T * FOCAL;
+    const C_TILT = 8.2 / COS_T;
+    dots = new Array(cellsX * cellsY);
     let index = 0;
-    for (let row = 0; row < rows; row += 1) {
-      const ny = (row / (rows - 1)) * 2 - 1;
-      for (let column = 0; column < columns; column += 1) {
-        const nx = (column / (columns - 1)) * 2 - 1;
-        // 轻微抖动，避免死板的正交网格
-        const seedA = ((column * 37 + row * 91) % 97) / 97;
-        const seedB = ((column * 53 + row * 29) % 89) / 89;
+    for (let row = 0; row < cellsY; row += 1) {
+      for (let column = 0; column < cellsX; column += 1) {
+        const seedA = ((column * 37 + row * 91 + 11) % 97) / 97;
+        const seedB = ((column * 53 + row * 29 + 7) % 89) / 89;
+        const seedC = ((column * 19 + row * 43 + 23) % 103) / 103;
+        const su = (column + 0.5 + (seedA - 0.5) * 0.86) / cellsX;
+        const sv = (row + 0.5 + (seedB - 0.5) * 0.86) / cellsY;
+        const ndcX = su * 2 - 1;
+        const ndcY = 1 - sv * 2;
+        const radial = Math.sqrt(ndcX * ndcX * 0.92 + ndcY * ndcY * 0.92);
+        if (seedC > 0.95 - 0.74 * Math.pow(Math.min(radial, 1.42), 1.25)) continue;
+        const denom = (ndcY - 0.10) - A_FOCAL;
+        const z = Math.max(-3.02, Math.min(2.06, (ndcY - 0.10) * C_TILT / denom));
+        const depth0 = Math.max(1, 8.2 - COS_T * z);
         dots[index] = {
-          wx: nx * planAspect * 1.65 + (seedA - 0.5) * 0.055,
-          wz: ny * 3.0 + (seedB - 0.5) * 0.055,
-          scale: 0.72 + seedA * 0.56,
+          wx: ndcX * depth0 * planAspect / FOCAL,
+          wz: z,
+          scale: 0.72 + seedA * 0.5,
         };
         index += 1;
       }
     }
+    dots.length = index;
     // 圆点贴图：用一张离屏圆点做 drawImage，比逐点画圆快很多
     dotSprite = document.createElement('canvas');
     const spriteSize = Math.max(8, Math.round(8 * pixelRatio));
@@ -454,9 +469,9 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
       for (let i = 0; i < dots.length; i += 1) {
         const dot = dots[i];
         // 绕平面中心做偏航，让整面看起来是立体的
-        const cz = dot.wz - 1.5;
+        const cz = dot.wz - 0.25;
         const rx = dot.wx * cy + cz * sy2;
-        const rz = -dot.wx * sy2 + cz * cy + 1.5;
+        const rz = -dot.wx * sy2 + cz * cy + 0.25;
         const dx = rx - mx;
         const dz = rz - my;
         const distance = Math.sqrt(dx * dx + dz * dz);
