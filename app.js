@@ -427,7 +427,7 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         const copyTop = copyNode ? copyNode.getBoundingClientRect().top - fieldRect.top : height;
         const header = document.querySelector('.site-header');
         const headerBottom = header ? header.getBoundingClientRect().bottom - fieldRect.top : 0;
-        const bandTop = Math.max(46, Math.round(headerBottom) + 14);
+        const bandTop = Math.max(46, Math.round(headerBottom) + 46);
         const bandBottom = Math.max(bandTop, Math.min(height - rh - driftPad, copyTop - rh - driftPad));
         for (let attempt = 0; attempt < 240; attempt += 1) {
           const x = Math.round(random() * Math.max(0, width - rw));
