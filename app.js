@@ -379,7 +379,22 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     const random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
     const placed = [];
     const shuffled = [...orbitWords].sort(() => random() - 0.5);
-    const floatClearance = window.matchMedia('(max-width:720px)').matches ? 5 : 15;
+    const floatClearance = window.matchMedia('(max-width:720px)').matches ? 10 : 26;
+    // 带框徽章需要干净的落点：把首屏文案与右侧卡片当作禁区
+    const fieldRect = field.getBoundingClientRect();
+    const obstacles = ['.hero-copy', '.hero-aside'].reduce((list, selector) => {
+      const node = hero.querySelector(selector);
+      if (!node) return list;
+      const rect = node.getBoundingClientRect();
+      if (!rect.width || !rect.height) return list;
+      list.push({
+        x: rect.left - fieldRect.left - 18,
+        y: rect.top - fieldRect.top - 18,
+        right: rect.right - fieldRect.left + 18,
+        bottom: rect.bottom - fieldRect.top + 18,
+      });
+      return list;
+    }, []);
     for (const word of shuffled) {
       const element = word.element;
       element.style.transform = 'none';
@@ -390,14 +405,27 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
       const angle = (parseFloat(word.angle) || 0) * Math.PI / 180;
       const rw = Math.abs(w * Math.cos(angle)) + Math.abs(h * Math.sin(angle));
       const rh = Math.abs(w * Math.sin(angle)) + Math.abs(h * Math.cos(angle));
+      const isChip = element.classList.contains('is-chip');
+      const clearance = isChip ? 42 : floatClearance;
+      const fits = (box) => placed.every((other) => box.right <= other.x || box.x >= other.right || box.bottom <= other.y || box.y >= other.bottom)
+        && (!isChip || obstacles.every((zone) => box.right <= zone.x || box.x >= zone.right || box.bottom <= zone.y || box.y >= zone.bottom));
       let chosen = null;
       for (let attempt = 0; attempt < 360; attempt += 1) {
         const x = Math.round(random() * Math.max(0, width - rw));
         const y = Math.round(random() * Math.max(0, height - rh));
-        const box = { x: x - floatClearance, y: y - floatClearance, right: x + rw + floatClearance, bottom: y + rh + floatClearance };
-        if (placed.every((other) => box.right <= other.x || box.x >= other.right || box.bottom <= other.y || box.y >= other.bottom)) {
+        const box = { x: x - clearance, y: y - clearance, right: x + rw + clearance, bottom: y + rh + clearance };
+        if (fits(box)) {
           chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box, rw, rh };
           break;
+        }
+      }
+      if (!chosen && isChip) {
+        // 徽章找不到干净落点就沿首屏顶部空带摆放
+        for (let attempt = 0; attempt < 240; attempt += 1) {
+          const x = Math.round(random() * Math.max(0, width - rw));
+          const y = Math.round(random() * Math.max(0, Math.min(150, height - rh)));
+          const box = { x: x - clearance, y: y - clearance, right: x + rw + clearance, bottom: y + rh + clearance };
+          if (fits(box)) { chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box, rw, rh }; break; }
         }
       }
       if (!chosen) {
@@ -422,8 +450,8 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     for (const word of orbitWords) {
       const anchorX = heroBounds.left + word.element.offsetLeft + word.element.offsetWidth / 2;
       const anchorY = heroBounds.top + word.element.offsetTop + word.element.offsetHeight / 2;
-      let targetX = Math.cos(now * 0.62 + word.index * 1.7) * 11;
-      let targetY = Math.sin(now * 0.48 + word.index * 2.3) * 13;
+      let targetX = Math.cos(now * 0.78 + word.index * 1.7) * 10;
+      let targetY = Math.sin(now * 0.61 + word.index * 2.3) * 12;
       if (motionPreference.matches) {
         word.x = 0;
         word.y = 0;
@@ -461,7 +489,8 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
       });
       if (!collides) { word.x = nextX; word.y = nextY; }
       else { word.vx *= -0.25; word.vy *= -0.25; }
-      word.element.style.transform = `translate3d(${word.x.toFixed(2)}px, ${word.y.toFixed(2)}px, 0) rotate(${word.angle})`;
+      const wobble = Math.sin(now * 0.85 + word.index * 2.6) * 2.4;
+      word.element.style.transform = `translate3d(${word.x.toFixed(2)}px, ${word.y.toFixed(2)}px, 0) rotate(${(parseFloat(word.angle) || 0) + wobble}deg)`;
     }
   };
 
