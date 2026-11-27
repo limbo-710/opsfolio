@@ -275,7 +275,7 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         float worldZ = a_vertex.y * 3.0;
         vec2 mouse = vec2((u_pointer.x * 2.0 - 1.0) * aspect * 1.65, (u_pointer.y - 0.5) * 6.0);
         float distanceToPointer = length(vec2(worldX, worldZ) - mouse);
-        float ring = sin(distanceToPointer * 7.2 - u_time * 3.8) * exp(-distanceToPointer * 0.98) * u_pointer_active;
+        float ring = sin(distanceToPointer * 7.4 - u_time * 3.8) * exp(-distanceToPointer * 1.12) * u_pointer_active;
         float mound = exp(-distanceToPointer * 2.0) * u_pointer_active;
         float swell = sin(worldX * 1.55 + u_time * 0.42) * 0.105
                     + cos(worldZ * 1.38 - u_time * 0.34) * 0.09;
@@ -287,8 +287,8 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         vec2 projected = vec2(worldX / depth * focal / aspect, viewY / depth * focal + 0.10);
         gl_Position = vec4(projected, 0.0, 1.0);
         float centerSize = 4.2 * exp(-distanceToPointer * 0.72) * u_pointer_active;
-        float perspectiveSize = 12.0 / max(depth, 1.0);
-        gl_PointSize = (0.72 + perspectiveSize * 1.25 + centerSize + abs(ring) * 0.32) * u_pixel_ratio * 0.82;
+        float perspectiveSize = 11.0 / max(depth, 1.0);
+        gl_PointSize = (0.62 + perspectiveSize * 1.15 + centerSize + abs(ring) * 0.26) * u_pixel_ratio * 0.66;
         v_ripple = clamp(abs(ring) * 0.7 + mound * 0.75, 0.0, 1.0);
         v_depth = depth;
       }
@@ -302,7 +302,7 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         if (edge > 0.5) discard;
         float fade = 1.0 - smoothstep(5.0, 12.0, v_depth);
         float alpha = (0.24 + fade * 0.16 + v_ripple * 0.36) * (1.0 - smoothstep(0.28, 0.5, edge));
-        vec3 color = vec3(165.0, 42.0, 22.0) / 255.0;
+        vec3 color = vec3(122.0, 20.0, 15.0) / 255.0;
         gl_FragColor = vec4(color, alpha);
       }
     `;
@@ -347,8 +347,8 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     canvas.width = Math.round(width * pixelRatio);
     canvas.height = Math.round(height * pixelRatio);
     gl.viewport(0, 0, canvas.width, canvas.height);
-    const columns = Math.max(32, Math.min(192, Math.ceil(width / 10)));
-    const rows = Math.max(32, Math.min(128, Math.ceil(height / 9)));
+    const columns = Math.max(40, Math.min(264, Math.ceil(width / 7.5)));
+    const rows = Math.max(40, Math.min(168, Math.ceil(height / 7)));
     const vertices = new Float32Array(columns * rows * 3);
     let offset = 0;
     for (let row = 0; row < rows; row += 1) {
@@ -417,12 +417,13 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
   const renderWords = () => {
     if (!hero || !orbitWords.length) return;
     const heroBounds = hero.getBoundingClientRect();
-    const repelRadius = 174;
+    const now = performance.now() * 0.001;
+    const repelRadius = 196;
     for (const word of orbitWords) {
       const anchorX = heroBounds.left + word.element.offsetLeft + word.element.offsetWidth / 2;
       const anchorY = heroBounds.top + word.element.offsetTop + word.element.offsetHeight / 2;
-      let targetX = 0;
-      let targetY = 0;
+      let targetX = Math.cos(now * 0.62 + word.index * 1.7) * 11;
+      let targetY = Math.sin(now * 0.48 + word.index * 2.3) * 13;
       if (motionPreference.matches) {
         word.x = 0;
         word.y = 0;
@@ -438,7 +439,7 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         if (distance < repelRadius) {
           const angle = distance > 0.001 ? Math.atan2(dy, dx) : word.index * 2.399;
           const intensity = ((repelRadius - distance) / repelRadius) ** 2;
-          const force = 20 * intensity;
+          const force = 30 * intensity;
           targetX = Math.cos(angle) * force;
           targetY = Math.sin(angle) * force;
         }
