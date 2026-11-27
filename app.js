@@ -407,31 +407,34 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
       const rw = Math.abs(w * Math.cos(angle)) + Math.abs(h * Math.sin(angle));
       const rh = Math.abs(w * Math.sin(angle)) + Math.abs(h * Math.cos(angle));
       const isChip = element.classList.contains('is-chip');
-      const clearance = isChip ? 42 : floatClearance;
+      const clearance = isChip ? 46 : floatClearance;
       const fits = (box) => placed.every((other) => box.right <= other.x || box.x >= other.right || box.bottom <= other.y || box.y >= other.bottom)
         && (!isChip || obstacles.every((zone) => box.right <= zone.x || box.x >= zone.right || box.bottom <= zone.y || box.y >= zone.bottom));
       let chosen = null;
-      for (let attempt = 0; attempt < 360; attempt += 1) {
-        const x = Math.round(random() * Math.max(0, width - rw));
-        const y = Math.round(random() * Math.max(0, height - rh));
-        const box = { x: x - clearance, y: y - clearance, right: x + rw + clearance, bottom: y + rh + clearance };
-        if (fits(box)) {
-          chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box, rw, rh };
-          break;
+      if (isChip) {
+        // 徽章不随机：在顶栏下方、文案上方的安全带内按网格依次取最靠前的空位，
+        // 并把整体漂浮位移预留出来，保证飘到最高/最左时也不会被裁。
+        const driftPad = 46;
+        const headerEl = document.querySelector('.site-header');
+        const safeTop = Math.round((headerEl ? headerEl.getBoundingClientRect().bottom - fieldRect.top : 0) + driftPad + 10);
+        const copyEl = hero.querySelector('.hero-copy');
+        const safeBottom = Math.round((copyEl ? copyEl.getBoundingClientRect().top - fieldRect.top : height) - rh - driftPad);
+        const rows = 4;
+        const cols = 12;
+        const spanY = Math.max(0, safeBottom - safeTop);
+        for (let row = 0; row < rows && !chosen; row += 1) {
+          const y = Math.round(safeTop + (rows > 1 ? spanY * row / (rows - 1) : 0));
+          for (let col = 0; col < cols; col += 1) {
+            const x = Math.round(cols > 1 ? (width - rw) * col / (cols - 1) : 0);
+            const box = { x: x - clearance, y: y - clearance, right: x + rw + clearance, bottom: y + rh + clearance };
+            if (fits(box)) { chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box, rw, rh }; break; }
+          }
         }
       }
-      if (!chosen && isChip) {
-        // 徽章退到首屏顶部空带：留出顶栏高度与整体漂浮位移，避免被导航遮住
-        const driftPad = 42;
-        const copyNode = hero.querySelector('.hero-copy');
-        const copyTop = copyNode ? copyNode.getBoundingClientRect().top - fieldRect.top : height;
-        const header = document.querySelector('.site-header');
-        const headerBottom = header ? header.getBoundingClientRect().bottom - fieldRect.top : 0;
-        const bandTop = Math.max(46, Math.round(headerBottom) + 46);
-        const bandBottom = Math.max(bandTop, Math.min(height - rh - driftPad, copyTop - rh - driftPad));
-        for (let attempt = 0; attempt < 240; attempt += 1) {
+      if (!chosen && !isChip) {
+        for (let attempt = 0; attempt < 360; attempt += 1) {
           const x = Math.round(random() * Math.max(0, width - rw));
-          const y = Math.round(bandTop + random() * Math.max(0, bandBottom - bandTop));
+          const y = Math.round(random() * Math.max(0, height - rh));
           const box = { x: x - clearance, y: y - clearance, right: x + rw + clearance, bottom: y + rh + clearance };
           if (fits(box)) { chosen = { x: x + (rw - w) / 2, y: y + (rh - h) / 2, box, rw, rh }; break; }
         }
