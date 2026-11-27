@@ -424,7 +424,9 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         // 徽章退到首屏顶部空带：留出顶栏高度与整体漂浮位移，避免被导航遮住
         const driftPad = 42;
         const copyTop = obstacles.length ? obstacles[0].y + 18 : height;
-        const bandTop = 46;
+        const header = document.querySelector('.site-header');
+        const headerBottom = header ? header.getBoundingClientRect().bottom - fieldRect.top : 0;
+        const bandTop = Math.max(46, Math.round(headerBottom) + 14);
         const bandBottom = Math.max(bandTop, Math.min(height - rh - driftPad, copyTop - rh - driftPad));
         for (let attempt = 0; attempt < 240; attempt += 1) {
           const x = Math.round(random() * Math.max(0, width - rw));
