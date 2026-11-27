@@ -234,136 +234,62 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     element, index, x: 0, y: 0, vx: 0, vy: 0, angle: element.dataset.angle || '0deg',
   }));
   const pointer = { x: 0.5, y: 0.5, active: false };
-  let gl = null;
-  let program = null;
-  let vertexBuffer = null;
-  let vertexCount = 0;
+  let ctx = null;
+  let dots = [];
+  let fieldW = 1;
+  let fieldH = 1;
+  let dotSprite = null;
   let pixelRatio = 1;
   let frame = 0;
-  let uniform = {};
-
-  const compile = (type, source) => {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error('Point field shader error:', gl.getShaderInfoLog(shader));
-      gl.deleteShader(shader);
-      return null;
-    }
-    return shader;
-  };
 
   if (canvas) {
-    gl = canvas.getContext('webgl', { alpha: true, antialias: true, powerPreference: 'low-power' });
+    ctx = canvas.getContext('2d', { alpha: true });
   }
 
-  if (gl) {
-    const vertexSource = `
-      precision mediump float;
-      attribute vec3 a_vertex;
-      uniform vec2 u_resolution;
-      uniform vec2 u_pointer;
-      uniform float u_pointer_active;
-      uniform float u_time;
-      uniform float u_pixel_ratio;
-      varying float v_ripple;
-      varying float v_depth;
-      void main() {
-        float aspect = u_resolution.x / max(u_resolution.y, 1.0);
-        float worldX = a_vertex.x * aspect * 1.65;
-        float worldZ = a_vertex.y * 3.0;
-        vec2 mouse = vec2((u_pointer.x * 2.0 - 1.0) * aspect * 1.65, (u_pointer.y - 0.5) * 6.0);
-        float distanceToPointer = length(vec2(worldX, worldZ) - mouse);
-        float ring = sin(distanceToPointer * 7.4 - u_time * 3.8) * exp(-distanceToPointer * 1.12) * u_pointer_active;
-        float mound = exp(-distanceToPointer * 2.0) * u_pointer_active;
-        float swell = sin(worldX * 1.55 + u_time * 0.42) * 0.105
-                    + cos(worldZ * 1.38 - u_time * 0.34) * 0.09;
-        float height = swell + ring * 0.28 + mound * 0.1066667;
-        float tilt = 0.35;
-        float depth = 8.2 - cos(tilt) * worldZ - sin(tilt) * height;
-        float viewY = cos(tilt) * height - sin(tilt) * worldZ;
-        float focal = 10.0;
-        vec2 projected = vec2(worldX / depth * focal / aspect, viewY / depth * focal + 0.10);
-        gl_Position = vec4(projected, 0.0, 1.0);
-        float centerSize = 4.2 * exp(-distanceToPointer * 0.72) * u_pointer_active;
-        float perspectiveSize = 11.0 / max(depth, 1.0);
-        gl_PointSize = (0.62 + perspectiveSize * 1.15 + centerSize + abs(ring) * 0.26) * u_pixel_ratio * 0.66;
-        v_ripple = clamp(abs(ring) * 0.7 + mound * 0.75, 0.0, 1.0);
-        v_depth = depth;
-      }
-    `;
-    const fragmentSource = `
-      precision mediump float;
-      varying float v_ripple;
-      varying float v_depth;
-      void main() {
-        float edge = length(gl_PointCoord - vec2(0.5));
-        if (edge > 0.5) discard;
-        float fade = 1.0 - smoothstep(5.0, 12.0, v_depth);
-        float alpha = (0.24 + fade * 0.16 + v_ripple * 0.36) * (1.0 - smoothstep(0.28, 0.5, edge));
-        vec3 color = vec3(122.0, 20.0, 15.0) / 255.0;
-        gl_FragColor = vec4(color, alpha);
-      }
-    `;
-    const vertexShader = compile(gl.VERTEX_SHADER, vertexSource);
-    const fragmentShader = compile(gl.FRAGMENT_SHADER, fragmentSource);
-    if (vertexShader && fragmentShader) {
-      program = gl.createProgram();
-      gl.attachShader(program, vertexShader);
-      gl.attachShader(program, fragmentShader);
-      gl.linkProgram(program);
-      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error('Point field program error:', gl.getProgramInfoLog(program));
-        gl.deleteProgram(program);
-        program = null;
-      }
-    }
-    if (program) {
-      uniform = {
-        resolution: gl.getUniformLocation(program, 'u_resolution'),
-        pointer: gl.getUniformLocation(program, 'u_pointer'),
-        active: gl.getUniformLocation(program, 'u_pointer_active'),
-        time: gl.getUniformLocation(program, 'u_time'),
-        pixelRatio: gl.getUniformLocation(program, 'u_pixel_ratio'),
-      };
-      vertexBuffer = gl.createBuffer();
-      gl.useProgram(program);
-      const attribute = gl.getAttribLocation(program, 'a_vertex');
-      gl.enableVertexAttribArray(attribute);
-      gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-      gl.vertexAttribPointer(attribute, 3, gl.FLOAT, false, 0, 0);
-      gl.enable(gl.BLEND);
-      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-      gl.clearColor(0, 0, 0, 0);
-    }
-  }
+  const DOT_RGB = [122, 20, 15];
 
   const resize = () => {
-    if (!canvas || !gl || !program) return;
+    if (!canvas || !ctx) return;
     const width = Math.max(1, window.innerWidth);
     const height = Math.max(1, window.innerHeight);
     pixelRatio = Math.min(window.devicePixelRatio || 1, 1.6);
     canvas.width = Math.round(width * pixelRatio);
     canvas.height = Math.round(height * pixelRatio);
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    const columns = Math.max(40, Math.min(264, Math.ceil(width / 7.5)));
-    const rows = Math.max(40, Math.min(168, Math.ceil(height / 7)));
-    const vertices = new Float32Array(columns * rows * 3);
-    let offset = 0;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    fieldW = width;
+    fieldH = height;
+    const spacing = width < 760 ? 14 : 17;
+    const columns = Math.max(26, Math.ceil(width / spacing));
+    const rows = Math.max(18, Math.ceil(height / spacing));
+    const planAspect = width / Math.max(height, 1);
+    dots = new Array(columns * rows);
+    let index = 0;
     for (let row = 0; row < rows; row += 1) {
-      const y = (row / (rows - 1)) * 2 - 1;
+      const ny = (row / (rows - 1)) * 2 - 1;
       for (let column = 0; column < columns; column += 1) {
-        const x = (column / (columns - 1)) * 2 - 1;
-        const tint = ((column * 37 + row * 91) % 101) / 100;
-        vertices[offset++] = x;
-        vertices[offset++] = y;
-        vertices[offset++] = tint;
+        const nx = (column / (columns - 1)) * 2 - 1;
+        // 轻微抖动，避免死板的正交网格
+        const seedA = ((column * 37 + row * 91) % 97) / 97;
+        const seedB = ((column * 53 + row * 29) % 89) / 89;
+        dots[index] = {
+          wx: nx * planAspect * 1.65 + (seedA - 0.5) * 0.055,
+          wz: ny * 3.0 + (seedB - 0.5) * 0.055,
+          scale: 0.72 + seedA * 0.56,
+        };
+        index += 1;
       }
     }
-    vertexCount = columns * rows;
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+    // 圆点贴图：用一张离屏圆点做 drawImage，比逐点画圆快很多
+    dotSprite = document.createElement('canvas');
+    const spriteSize = Math.max(8, Math.round(8 * pixelRatio));
+    dotSprite.width = spriteSize;
+    dotSprite.height = spriteSize;
+    const spriteCtx = dotSprite.getContext('2d');
+    spriteCtx.fillStyle = `rgb(${DOT_RGB[0]},${DOT_RGB[1]},${DOT_RGB[2]})`;
+    spriteCtx.beginPath();
+    spriteCtx.arc(spriteSize / 2, spriteSize / 2, spriteSize / 2 - 1, 0, Math.PI * 2);
+    spriteCtx.fill();
     requestRender();
   };
 
@@ -507,15 +433,63 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
   };
 
   const draw = (time = 0) => {
-    if (gl && program) {
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.useProgram(program);
-      gl.uniform2f(uniform.resolution, canvas.width / pixelRatio, canvas.height / pixelRatio);
-      gl.uniform2f(uniform.pointer, pointer.x, pointer.y);
-      gl.uniform1f(uniform.active, pointer.active ? 1 : 0);
-      gl.uniform1f(uniform.time, time * 0.00055);
-      gl.uniform1f(uniform.pixelRatio, pixelRatio);
-      gl.drawArrays(gl.POINTS, 0, vertexCount);
+    if (ctx && dots.length) {
+      ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      ctx.clearRect(0, 0, fieldW, fieldH);
+      const t = time * 0.00055;
+      const aspect = fieldW / Math.max(fieldH, 1);
+      const active = pointer.active ? 1 : 0;
+      const mx = (pointer.x * 2 - 1) * aspect * 1.65;
+      const my = (pointer.y - 0.5) * 6.0;
+      // 整张点阵平面随鼠标轻微转动：左右偏航 + 上下俯仰
+      const yaw = (pointer.x - 0.5) * 0.30 * (0.3 + 0.7 * active);
+      const pitch = (pointer.y - 0.5) * 0.15 * (0.3 + 0.7 * active);
+      const cy = Math.cos(yaw);
+      const sy2 = Math.sin(yaw);
+      const tilt = 0.35 + pitch;
+      const cosT = Math.cos(tilt);
+      const sinT = Math.sin(tilt);
+      const focal = 10.0;
+      let currentAlpha = -1;
+      for (let i = 0; i < dots.length; i += 1) {
+        const dot = dots[i];
+        // 绕平面中心做偏航，让整面看起来是立体的
+        const cz = dot.wz - 1.5;
+        const rx = dot.wx * cy + cz * sy2;
+        const rz = -dot.wx * sy2 + cz * cy + 1.5;
+        const dx = rx - mx;
+        const dz = rz - my;
+        const distance = Math.sqrt(dx * dx + dz * dz);
+        // 鼠标按下般的凹陷 + 向外推开；涟漪只在小范围内
+        const press = Math.exp(-distance * distance * 1.5) * active;
+        const ring = Math.sin(distance * 13.0 - t * 4.2) * Math.exp(-distance * 2.4) * active;
+        const push = press * 0.34;
+        const pushX = (distance > 0.001 ? dx / distance : 1) * push;
+        const pushZ = (distance > 0.001 ? dz / distance : 0) * push;
+        const height = Math.sin(rx * 1.55 + t * 0.42) * 0.1
+                     + Math.cos(rz * 1.38 - t * 0.34) * 0.085
+                     + ring * 0.13
+                     - press * 0.2;
+        const px = rx + pushX;
+        const pz = rz + pushZ;
+        const depth = 8.2 - cosT * pz - sinT * height;
+        if (depth < 0.6) continue;
+        const viewY = cosT * height - sinT * pz;
+        const screenX = (px / depth * focal / aspect * 0.5 + 0.5) * fieldW;
+        const screenY = (0.5 - (viewY / depth * focal + 0.10) * 0.5) * fieldH;
+        if (screenX < -12 || screenX > fieldW + 12 || screenY < -12 || screenY > fieldH + 12) continue;
+        const depthFade = 1 - Math.min(1, Math.max(0, (depth - 5) / 8));
+        const alpha = 0.30 + depthFade * 0.18 + Math.min(1, Math.abs(ring) * 0.5 + press * 0.55) * 0.30;
+        const bucket = Math.round(alpha * 20) / 20;
+        if (bucket !== currentAlpha) {
+          currentAlpha = bucket;
+          ctx.globalAlpha = bucket;
+        }
+        const size = Math.max(1.5, (1.25 + 12 / Math.max(depth, 1) * 1.15 + press * 2.4 + Math.abs(ring) * 0.2) * dot.scale);
+        if (dotSprite) ctx.drawImage(dotSprite, screenX - size / 2, screenY - size / 2, size, size);
+        else ctx.fillRect(screenX - size / 2, screenY - size / 2, size, size);
+      }
+      ctx.globalAlpha = 1;
     }
     renderWords();
   };
