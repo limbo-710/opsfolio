@@ -1894,7 +1894,7 @@ body.copy-edit-mode [data-copy-target][contenteditable="true"] {
 }
 .hero-orbit-words > .hero-orbit-word {
   font-family:var(--tag-font) !important;
-  font-size:calc(var(--orbit-size,clamp(20px,2.4vw,34px)) * var(--tag-scale,1)) !important;
+  font-size:calc(var(--orbit-size,clamp(20px,2.4vw,34px)) * var(--tag-scale,1) * var(--tag-shrink,.8)) !important;
   animation:orbit-tag-drift var(--orbit-duration,48s) ease-in-out var(--orbit-delay,-11s) infinite !important;
 }
 .hero-orbit-word:nth-child(odd) { --orbit-duration:48s; --float-x:4px; --float-y:-5px; }
@@ -2023,7 +2023,7 @@ body.copy-edit-mode [data-copy-target][contenteditable="true"] {
   animation-duration:calc(var(--space-float-duration,17s) / 2.6) !important;
 }
 .hero-orbit-words > .hero-orbit-word.is-chip {
-  padding:9px 18px;
+  padding:7px 15px;
   border:1px solid rgba(172,57,35,.26) !important;
   border-radius:999px;
   background:rgba(252,248,239,.52) !important;
@@ -2039,3 +2039,8 @@ body.copy-edit-mode [data-copy-target][contenteditable="true"] {
 @media (prefers-reduced-motion: reduce) {
   .hero-orbit-words > .hero-orbit-word { animation-duration:180s !important; }
 }
+
+/* Tag 铺满整行视口：词层不再被内容栏宽度限制，左右留白也能落词 */
+.hero { overflow:visible !important; }
+/* Tag 带高度收到首屏上部区域（与蓝框一致），左右仍铺满视口 */
+.hero-orbit-words { height:clamp(300px,34vh,360px) !important; }

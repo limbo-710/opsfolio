@@ -370,6 +370,12 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
   const layoutOrbitWords = () => {
     const field = document.querySelector('.hero-orbit-words');
     if (!field || !orbitWords.length) return;
+    // 词层铺满整个视口（含左右留白），而不是只占内容栏
+    const heroRect = hero.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
+    field.style.setProperty('width', `${viewportWidth}px`, 'important');
+    field.style.setProperty('left', `${-Math.round(heroRect.left)}px`, 'important');
+    field.style.setProperty('right', 'auto', 'important');
     const width = field.clientWidth;
     const height = field.clientHeight;
     if (width < 1 || height < 1) return;
@@ -383,7 +389,7 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     const order = [...scrambled.filter((w) => w.element.classList.contains('is-chip')), ...scrambled.filter((w) => !w.element.classList.contains('is-chip'))];
     const fieldRect = field.getBoundingClientRect();
     // 等分格网：每个词只在自己的格子里抖动，保证四散、任何视口宽度都不会堆叠
-    const cols = width < 760 ? 3 : width < 1100 ? 4 : 5;
+    const cols = width < 760 ? 3 : width < 1100 ? 4 : width < 1500 ? 5 : 6;
     const rows = Math.ceil(order.length / cols);
     const cellW = width / cols;
     const cellH = height / rows;
@@ -450,12 +456,12 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
 
   const renderWords = () => {
     if (!hero || !orbitWords.length) return;
-    const heroBounds = hero.getBoundingClientRect();
+    const fieldBounds = document.querySelector('.hero-orbit-words').getBoundingClientRect();
     const now = performance.now() * 0.001;
     const repelRadius = 280;
     for (const word of orbitWords) {
-      const anchorX = heroBounds.left + word.element.offsetLeft + word.element.offsetWidth / 2;
-      const anchorY = heroBounds.top + word.element.offsetTop + word.element.offsetHeight / 2;
+      const anchorX = fieldBounds.left + word.element.offsetLeft + word.element.offsetWidth / 2;
+      const anchorY = fieldBounds.top + word.element.offsetTop + word.element.offsetHeight / 2;
       let targetX = Math.cos(now * 0.78 + word.index * 1.7) * 10;
       let targetY = Math.sin(now * 0.61 + word.index * 2.3) * 12;
       if (motionPreference.matches) {
