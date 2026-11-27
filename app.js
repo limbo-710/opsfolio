@@ -262,14 +262,13 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
     // 屏幕空间采样 + 反投影：先按“离画面中心越远越稀”的概率撒点，
     // 再把每个屏幕点反算成平面坐标，于是密度中心正好落在视口正中。
     const planAspect = width / Math.max(height, 1);
-    const cellsX = Math.max(30, Math.round(width / 14));
-    const cellsY = Math.max(22, Math.round(height / 14));
+    const cellsX = Math.max(34, Math.round(width / 11));
+    const cellsY = Math.max(24, Math.round(height / 11));
     const TILT = 0.35;
     const COS_T = Math.cos(TILT);
     const SIN_T = Math.sin(TILT);
     const FOCAL = 10;
     const A_FOCAL = SIN_T * FOCAL;
-    const C_TILT = 8.2 / COS_T;
     dots = new Array(cellsX * cellsY);
     let index = 0;
     for (let row = 0; row < cellsY; row += 1) {
@@ -281,10 +280,13 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         const sv = (row + 0.5 + (seedB - 0.5) * 0.86) / cellsY;
         const ndcX = su * 2 - 1;
         const ndcY = 1 - sv * 2;
-        const radial = Math.sqrt(ndcX * ndcX * 0.92 + ndcY * ndcY * 0.92);
-        if (seedC > 0.95 - 0.74 * Math.pow(Math.min(radial, 1.42), 1.25)) continue;
-        const denom = (ndcY - 0.10) - A_FOCAL;
-        const z = Math.max(-3.02, Math.min(2.06, (ndcY - 0.10) * C_TILT / denom));
+        // 采样中心按实测校正：投影会把重心往上拉，这里补偿回来，让最密点落在视口正中
+        const radial = Math.sqrt(ndcX * ndcX * 0.94 + ndcY * ndcY * 0.94);
+        if (seedC > 1.0 - 0.88 * Math.pow(Math.min(radial, 1.45), 1.35)) continue;
+        // 精确反投影：-A*z/(8.2-cosT*z) = ndcY - 0.10
+        const k = ndcY - 0.10;
+        const denom = k * COS_T - A_FOCAL;
+        const z = Math.max(-3.02, Math.min(2.06, Math.abs(denom) < 0.001 ? 0 : 8.2 * k / denom));
         const depth0 = Math.max(1, 8.2 - COS_T * z);
         dots[index] = {
           wx: ndcX * depth0 * planAspect / FOCAL,
