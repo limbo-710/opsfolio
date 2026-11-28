@@ -461,18 +461,18 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         const dx = rx - mx;
         const dz = rz - my;
         const distance = Math.sqrt(dx * dx + dz * dz);
-        // 鼠标按下般的凹陷 + 向外推开；涟漪只在小范围内
-        const press = Math.exp(-distance * distance * 1.5) * active;
-        const ring = Math.sin(distance * 13.0 - t * 4.2) * Math.exp(-distance * 2.4) * active;
-        const push = press * 0.34;
-        const pushX = (distance > 0.001 ? dx / distance : 1) * push;
-        const pushZ = (distance > 0.001 ? dz / distance : 0) * push;
-        const height = Math.sin(rx * 1.55 + t * 0.42) * 0.1
-                     + Math.cos(rz * 1.38 - t * 0.34) * 0.085
-                     + ring * 0.13
-                     - press * 0.2;
-        const px = rx + pushX;
-        const pz = rz + pushZ;
+        // 水面涟漪：光标像扯住网格上一点上下拉扯，波纹一圈圈向外荡开（不做排斥推挤）
+        const envelope = Math.exp(-distance * 1.25) * active;
+        // 主波 + 次波：一圈圈向外扩散；中心有一个被"扯"下去的凹陷
+        const ripple = Math.sin(distance * 21.0 - t * 6.2) * envelope * 0.098
+                     + Math.sin(distance * 12.0 - t * 3.7) * envelope * 0.052
+                     - Math.exp(-distance * distance * 3.2) * 0.075 * active;
+        const rest = Math.sin(rx * 1.55 + t * 0.42) * 0.05
+                   + Math.cos(rz * 1.38 - t * 0.34) * 0.045;
+        const height = rest + ripple;
+        const waveAmp = Math.min(1, Math.abs(ripple) / 0.08);
+        const px = rx;
+        const pz = rz;
         const depth = 8.2 - cosT * pz - sinT * height;
         if (depth < 0.6) continue;
         const viewY = cosT * height - sinT * pz;
@@ -480,15 +480,15 @@ if (imageViewer && viewerImage && viewerScroll && viewerCaption) {
         const screenY = (0.5 - (viewY / depth * focal + 0.10) * 0.5) * fieldH;
         if (screenX < -12 || screenX > fieldW + 12 || screenY < -12 || screenY > fieldH + 12) continue;
         const depthFade = 1 - Math.min(1, Math.max(0, (depth - 5) / 8));
-        // 越靠近涟漪中心：点越大、越透明（像被水推开的软光斑）
+        // 波峰处的点更大、更透明，波谷处的点小而实
         const baseAlpha = 0.30 + depthFade * 0.18;
-        const alpha = Math.max(0.05, baseAlpha * (1 - 0.62 * press) + Math.abs(ring) * 0.04);
+        const alpha = Math.max(0.05, baseAlpha * (1 - 0.42 * waveAmp));
         const bucket = Math.round(alpha * 20) / 20;
         if (bucket !== currentAlpha) {
           currentAlpha = bucket;
           ctx.globalAlpha = bucket;
         }
-        const size = Math.max(1.5, (1.2 + 11 / Math.max(depth, 1) * 1.1) * dot.scale * (1 + press * 3.4 + Math.abs(ring) * 0.28));
+        const size = Math.max(1.5, (1.2 + 11 / Math.max(depth, 1) * 1.1) * dot.scale * (1 + waveAmp * 1.5));
         if (dotSprite) ctx.drawImage(dotSprite, screenX - size / 2, screenY - size / 2, size, size);
         else ctx.fillRect(screenX - size / 2, screenY - size / 2, size, size);
       }
